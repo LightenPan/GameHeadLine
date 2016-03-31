@@ -67,13 +67,6 @@ public class DefaultRestfulClient {
         mClient.get(mContext, url, params, handler);
     }
 
-    //不带参数，获取json对象或者数组
-    public void get(String url, JsonResponseHandler handler) {
-        RequestParams params = new RequestParams();
-        params.put("token", mToken);
-        mClient.get(mContext, url, params, handler);
-    }
-
     //用一个完整url获取一个string对象
     public void post(String url, AsyncHttpResponseHandler handler) {
         RequestParams params = new RequestParams();
@@ -102,13 +95,6 @@ public class DefaultRestfulClient {
 
     //下载数据使用，会返回byte数据
     public void post(String url, BinaryHttpResponseHandler handler) {
-        RequestParams params = new RequestParams();
-        params.put("token", mToken);
-        mClient.post(mContext, url, params, handler);
-    }
-
-    //不带参数，获取json对象或者数组
-    public void post(String url, JsonResponseHandler handler) {
         RequestParams params = new RequestParams();
         params.put("token", mToken);
         mClient.post(mContext, url, params, handler);

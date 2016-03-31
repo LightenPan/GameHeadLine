@@ -1,11 +1,15 @@
 package com.flylighten.app.gameheadline.protocol;
 
+import android.os.Looper;
 import android.widget.Toast;
 
 import com.flylighten.app.gameheadline.MyApplication;
 import com.flylighten.app.gameheadline.model.NewsListItemModel;
 import com.flylighten.app.gameheadline.restful.BaseNetTool;
+import com.flylighten.app.gameheadline.restful.DefaultRestfulClient;
 import com.flylighten.app.gameheadline.restful.RequestCallback;
+import com.loopj.android.http.AsyncHttpResponseHandler;
+import com.loopj.android.http.JsonHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 
 import org.json.JSONArray;
@@ -19,15 +23,17 @@ public class GetNewsListProxy {
 
     public abstract class Callback {
         protected abstract void onSuccess(List<NewsListItemModel> newsList);
+        protected abstract void onFailure(String message);
     }
 
-    public static void doNet(int offset, int count, final GetNewsListProxy.Callback callback) {
+    public static void doNet(final Looper looper, int offset, int count, final GetNewsListProxy.Callback callback) {
         final BaseNetTool oNetTool = new BaseNetTool();
-        final String url = "http://192.168.171.133/jsonapi/duowan/GetDigestList";
+        final String url = "http://192.168.31.249/jsonapi/duowan/GetDigestList";
         RequestParams params = new RequestParams();
         params.put("offset", offset);
         params.put("count", count);
-        oNetTool.get(url, params, new RequestCallback() {
+
+        oNetTool.get(looper, url, params, new RequestCallback() {
             @Override
             protected void onSuccess(JSONObject resp) {
                 try {
@@ -55,13 +61,24 @@ public class GetNewsListProxy {
             protected void onFailure(int statusCode, String message) {
                 String errmsg = String.format("请求失败. url: %s, code: %d, message: %s", url, statusCode, message);
                 Toast.makeText(MyApplication.getContext(), errmsg, Toast.LENGTH_LONG).show();
+                callback.onFailure(errmsg);
             }
 
             @Override
             protected void onTimeOut() {
                 String errmsg = String.format("请求超时. url: %s", url);
                 Toast.makeText(MyApplication.getContext(), errmsg, Toast.LENGTH_LONG).show();
+                callback.onFailure(errmsg);
             }
         });
+    }
+
+    public static void doNet(int offset, int count, AsyncHttpResponseHandler handler) {
+        final BaseNetTool oNetTool = new BaseNetTool();
+        final String url = "http://23.251.58.227/jsonapi/duowan/GetDigestList";
+        RequestParams params = new RequestParams();
+        params.put("offset", offset);
+        params.put("count", count);
+        DefaultRestfulClient.inst().get(url, params, handler);
     }
 }
