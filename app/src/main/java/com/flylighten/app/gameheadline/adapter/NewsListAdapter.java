@@ -72,6 +72,13 @@ public class NewsListAdapter extends BaseAdapter {
             viewHolder = (ViewHolder) view.getTag();
         }
 
+        viewHolder.date.setText(item.date);
+        viewHolder.source.setText(String.format("%d", item.source));
+        viewHolder.date.setText(item.date);
+        viewHolder.title.setText(item.title);
+        viewHolder.digest.setText(item.digest);
+        viewHolder.other.setText(item.other);
+
         return view;
     }
 }

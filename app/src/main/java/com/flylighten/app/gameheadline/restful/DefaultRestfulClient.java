@@ -30,6 +30,7 @@ public class DefaultRestfulClient {
 
         //设置链接超时，单位毫秒，如果不设置，默认为10秒
         mClient.setTimeout(3000);
+        mClient.setConnectTimeout(3000);
 
         return 0;
     }
@@ -44,7 +45,13 @@ public class DefaultRestfulClient {
     //url里面带参数
     public void get(String url, RequestParams params, AsyncHttpResponseHandler handler) {
         params.put("token", mToken);
-        mClient.get(mContext, url, params, handler);
+        mClient.get(url, params, handler);
+    }
+
+    //url里面带参数
+    public void get(Context context, String url, RequestParams params, AsyncHttpResponseHandler handler) {
+        params.put("token", mToken);
+        mClient.get(context, url, params, handler);
     }
 
     //不带参数，获取json对象或者数组

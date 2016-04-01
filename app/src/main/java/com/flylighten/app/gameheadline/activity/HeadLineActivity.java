@@ -2,6 +2,8 @@ package com.flylighten.app.gameheadline.activity;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -15,28 +17,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.flylighten.app.gameheadline.R;
 import com.flylighten.app.gameheadline.Utils.LocalDisplay;
 import com.flylighten.app.gameheadline.adapter.NewsListAdapter;
-import com.flylighten.app.gameheadline.data.DataUtils;
 import com.flylighten.app.gameheadline.model.NewsListItemModel;
-import com.flylighten.app.gameheadline.protocol.GetNewsListProxy;
-import com.flylighten.app.gameheadline.restful.DefaultRestfulClient;
-import com.loopj.android.http.AsyncHttpClient;
-import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.loopj.android.http.JsonHttpResponseHandler;
-import com.loopj.android.http.RequestParams;
+import com.flylighten.app.gameheadline.protocol.ProxyGetNewsList;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
 import java.util.List;
 
-import cz.msebera.android.httpclient.Header;
+import in.srain.cube.views.loadmore.LoadMoreContainer;
+import in.srain.cube.views.loadmore.LoadMoreHandler;
+import in.srain.cube.views.loadmore.LoadMoreListViewContainer;
 import in.srain.cube.views.ptr.PtrDefaultHandler;
 import in.srain.cube.views.ptr.PtrFrameLayout;
 import in.srain.cube.views.ptr.PtrHandler;
@@ -49,16 +41,16 @@ public class HeadLineActivity extends AppCompatActivity
 
     class ViewHolder {
         public SwipeRefreshLayout swipeRefreshLayout;
+        NewsListAdapter newsListAdapter;
         public ListView newsListView;
         public PtrFrameLayout mPtrFrame;
     }
+    ViewHolder viewHolder = new ViewHolder();
 
-    ViewHolder holder = new ViewHolder();
-
-    class ProxyHolder {
-        public GetNewsListProxy getNewsList = new GetNewsListProxy();
+    class DataHolder {
+        List<NewsListItemModel> newsDataList;
     }
-    ProxyHolder proxyHolder = new ProxyHolder();
+    DataHolder dataHolder = new DataHolder();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,16 +79,21 @@ public class HeadLineActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        //初始化新闻列表
+        initNewsList();
+    }
+
+    private void initNewsList() {
         // the following are default settings
-        holder.mPtrFrame = (PtrFrameLayout) findViewById(R.id.head_line_list_view_frame);
-        holder.mPtrFrame.setResistance(1.7f);
-        holder.mPtrFrame.setRatioOfHeaderHeightToRefresh(1.2f);
-        holder.mPtrFrame.setDurationToClose(200);
-        holder.mPtrFrame.setDurationToCloseHeader(1000);
+        viewHolder.mPtrFrame = (PtrFrameLayout) findViewById(R.id.head_line_list_view_frame);
+        viewHolder.mPtrFrame.setResistance(1.7f);
+        viewHolder.mPtrFrame.setRatioOfHeaderHeightToRefresh(1.2f);
+        viewHolder.mPtrFrame.setDurationToClose(200);
+        viewHolder.mPtrFrame.setDurationToCloseHeader(1000);
         // default is false
-        holder.mPtrFrame.setPullToRefresh(false);
+        viewHolder.mPtrFrame.setPullToRefresh(false);
         // default is true
-        holder.mPtrFrame.setKeepHeaderWhenRefresh(true);
+        viewHolder.mPtrFrame.setKeepHeaderWhenRefresh(true);
         // header
         final StoreHouseHeader header = new StoreHouseHeader(this);
         header.setPadding(0, LocalDisplay.dp2px(15, this), 0, 0);
@@ -107,56 +104,17 @@ public class HeadLineActivity extends AppCompatActivity
          */
         header.initWithString("Alibaba");
 
-        holder.mPtrFrame.setPtrHandler(new PtrHandler() {
+        viewHolder.mPtrFrame.setPtrHandler(new PtrHandler() {
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
-//                frame.postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        holder.mPtrFrame.refreshComplete();
-//                    }
-//                }, 3000);
+                ProxyGetNewsList proxy = new ProxyGetNewsList();
+                proxy.doNet(0, 50, new ProxyGetNewsList.Callback() {
 
-                frame.post(new Runnable() {
                     @Override
-                    public void run() {
-                        proxyHolder.getNewsList.doNet(0, 5, new AsyncHttpResponseHandler() {
-
-                            @Override
-                            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-
-                                try {
-                                    JSONObject resp = new JSONObject(responseBody.toString());
-                                    int result = resp.getInt("result");
-                                    JSONArray array = resp.getJSONArray("news_list");
-                                    if (0 == result && array.length() > 0) {
-                                        final List<NewsListItemModel> newsList = new ArrayList<NewsListItemModel>();
-                                        for (int i = 0; i < array.length(); ++i) {
-                                            JSONObject obj = array.getJSONObject(i);
-                                            NewsListItemModel item = new NewsListItemModel();
-                                            //item.date = obj.getLong("date");
-                                            item.title = obj.getString("title");
-                                            item.digest = obj.getString("title");
-                                            item.other = obj.getString("content");
-                                            newsList.add(item);
-                                        }
-                                    }
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                    Toast.makeText(mContext, e.getMessage(), Toast.LENGTH_LONG).show();
-                                }
-                                holder.mPtrFrame.refreshComplete();
-                            }
-
-                            @Override
-                            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                                Toast.makeText(mContext, error.getMessage(), Toast.LENGTH_LONG).show();
-                            }
-                        });
+                    protected void onSuccess(List<NewsListItemModel> newsList) {
+                        viewHolder.mPtrFrame.refreshComplete();
                     }
                 });
-
-
             }
 
             @Override
@@ -165,10 +123,19 @@ public class HeadLineActivity extends AppCompatActivity
             }
         });
 
-        List<NewsListItemModel> dataList = DataUtils.getExampleList();
-        NewsListAdapter newsListAdapter = new NewsListAdapter(this, R.layout.news_list_item, dataList);
-        holder.newsListView = (ListView) findViewById(R.id.head_line_list_view);
-        holder.newsListView.setAdapter(newsListAdapter);
+//        viewHolder.newsListAdapter = new NewsListAdapter(this, R.layout.news_list_item, viewHolder.newsDataList);
+//        viewHolder.newsListView = (ListView) findViewById(R.id.head_line_list_view);
+//        viewHolder.newsListView.setAdapter(viewHolder.newsListAdapter);
+
+        // load more container
+//        final LoadMoreListViewContainer loadMoreListViewContainer = (LoadMoreListViewContainer) view.findViewById(R.id.load_more_list_view_container);
+//        loadMoreListViewContainer.useDefaultHeader();
+//        loadMoreListViewContainer.setLoadMoreHandler(new LoadMoreHandler() {
+//            @Override
+//            public void onLoadMore(LoadMoreContainer loadMoreContainer) {
+//                mDataModel.queryNextPage();
+//            }
+//        });
     }
 
     @Override
@@ -227,4 +194,20 @@ public class HeadLineActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            // super.handleMessage(msg);
+            switch (msg.what) {
+                case 1:
+                    // UI线程中调用此方法通知观察者(源码中关于adapter存在一个observer,未深究！)adapter数据已改变，刷新view
+                    viewHolder.newsListAdapter.notifyDataSetChanged();
+                    // adapter.notifyDataSetInvalidated();// 与上面
+                    // 效果相同，源码中除了注释不同，执行的代码一样，同样未深究
+                    // listView.postInvalidate();刷新无效
+                    break;
+            }
+        }
+    };
 }
