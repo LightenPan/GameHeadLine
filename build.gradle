@@ -17,9 +17,7 @@ allprojects {
     repositories {
         jcenter()
         mavenCentral();
-        maven {
-            url 'https://oss.sonatype.org/content/repositories/releases'
-        }
+        maven{ url 'http://maven.oschina.net/content/groups/public/' }
     }
 }
 task clean(type: Delete) {

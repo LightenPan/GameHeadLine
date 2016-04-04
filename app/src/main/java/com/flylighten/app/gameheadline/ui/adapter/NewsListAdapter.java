@@ -1,4 +1,4 @@
-package com.flylighten.app.gameheadline.adapter;
+package com.flylighten.app.gameheadline.ui.adapter;
 
 
 import android.content.Context;
@@ -9,7 +9,7 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.flylighten.app.gameheadline.R;
-import com.flylighten.app.gameheadline.model.NewsListItemModel;
+import com.flylighten.app.gameheadline.data.NewsListItem;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class NewsListAdapter extends BaseAdapter {
 
     private Context mContext;
     private int mResource;
-    private List<NewsListItemModel> mDataList;
+    private List<NewsListItem> mDataList;
 
     class ViewHolder {
         TextView source;
@@ -31,7 +31,7 @@ public class NewsListAdapter extends BaseAdapter {
     }
 
     public NewsListAdapter(Context context, int resource,
-                           List<NewsListItemModel> dataList) {
+                           List<NewsListItem> dataList) {
         mContext = context;
         mResource = resource;
         this.mDataList = dataList;
@@ -54,7 +54,7 @@ public class NewsListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        NewsListItemModel item = (NewsListItemModel) getItem(position);
+        NewsListItem item = (NewsListItem) getItem(position);
         View view;
         ViewHolder viewHolder;
         if (convertView == null) {
@@ -72,12 +72,10 @@ public class NewsListAdapter extends BaseAdapter {
             viewHolder = (ViewHolder) view.getTag();
         }
 
-        viewHolder.date.setText(item.date);
-        viewHolder.source.setText(String.format("%d", item.source));
+        viewHolder.title.setText(item.title);
         viewHolder.date.setText(item.date);
         viewHolder.title.setText(item.title);
         viewHolder.digest.setText(item.digest);
-        viewHolder.other.setText(item.other);
 
         return view;
     }

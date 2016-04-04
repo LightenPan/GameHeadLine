@@ -1,6 +1,7 @@
 package com.flylighten.app.gameheadline.event;
 
-import de.greenrobot.event.EventBus;
+import org.greenrobot.eventbus.EventBus;
+
 import in.srain.cube.app.lifecycle.LifeCycleComponentManager;
 
 public class EventCenter {
@@ -10,12 +11,12 @@ public class EventCenter {
     private EventCenter() {
     }
 
-    public static DemoSimpleEventHandler bindContainerAndHandler(Object container, DemoSimpleEventHandler handler) {
+    public static CommonEventHandler bindContainerAndHandler(Object container, CommonEventHandler handler) {
         LifeCycleComponentManager.tryAddComponentToContainer(handler, container);
         return handler;
     }
 
-    public static final EventBus getInstance() {
+    public static final EventBus inst() {
         return instance;
     }
 }
