@@ -39,6 +39,7 @@ public class NewsListDataModel {
                         for (int i = 0; i < array.length(); ++i) {
                             JsonData obj = array.optJson(i);
                             NewsListItem item = new NewsListItem();
+                            item.source = obj.optString("source");
                             item.updated = obj.optString("updated");
                             item.title = obj.optString("title");
                             item.linkmd5id = obj.optString("linkmd5id");
@@ -66,8 +67,9 @@ public class NewsListDataModel {
                 });
 
         mCurPageIndex = 0;
+        request.setDisableCache(true);
         RequestData requestData = request.getRequestData();
-        requestData.addQueryData("offset", mCurPageIndex);
+        requestData.addQueryData("offset", mCurPageIndex*mPageCount);
         requestData.addQueryData("count", mPageCount);
         request.getRequestData().setRequestUrl(API.GetDigestList);
         request.send();
@@ -82,6 +84,7 @@ public class NewsListDataModel {
                         for (int i = 0; i < array.length(); ++i) {
                             JsonData obj = array.optJson(i);
                             NewsListItem item = new NewsListItem();
+                            item.source = obj.optString("source");
                             item.updated = obj.optString("updated");
                             item.title = obj.optString("title");
                             item.linkmd5id = obj.optString("linkmd5id");
@@ -97,9 +100,13 @@ public class NewsListDataModel {
                         event.isEmpty = dataList.isEmpty();
                         if (array.length() >= mPageCount) {
                             event.hasMore = true;
+                            event.isEmpty = false;
+                        } else {
+                            event.hasMore = false;
+                            event.isEmpty = true;
                         }
-
                         mCurPageIndex = mCurPageIndex + 1;
+
                         return event;
                     }
 
@@ -109,8 +116,9 @@ public class NewsListDataModel {
                     }
                 });
 
+        request.setDisableCache(true);
         RequestData requestData = request.getRequestData();
-        requestData.addQueryData("offset", mCurPageIndex);
+        requestData.addQueryData("offset", mCurPageIndex*mPageCount);
         requestData.addQueryData("count", mPageCount);
         request.getRequestData().setRequestUrl(API.GetDigestList);
         request.send();

@@ -76,6 +76,7 @@ public class NewsListAdapter extends BaseAdapter {
         viewHolder.date.setText(item.date);
         viewHolder.title.setText(item.title);
         viewHolder.digest.setText(item.digest);
+        viewHolder.source.setText("来自:" + item.source);
 
         return view;
     }

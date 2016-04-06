@@ -9,6 +9,7 @@ public class NewsListItem {
     public String date;
     public String digest;
 
+    public String source;
     public String updated;
     public String linkmd5id;
 }
