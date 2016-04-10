@@ -1,13 +1,11 @@
 package com.flylighten.app.gameheadline.model;
 
 import com.flylighten.app.gameheadline.data.NewsListItem;
-import com.flylighten.app.gameheadline.event.EventCenter;
-import com.flylighten.app.gameheadline.event.NewsListDataEvent;
+import com.flylighten.app.gameheadline.event.LatestNewsListDataEvent;
 import com.flylighten.app.gameheadline.request.API;
 import com.flylighten.app.gameheadline.request.CommCacheRequest;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import in.srain.cube.request.CacheAbleRequest;
 import in.srain.cube.request.CacheAbleRequestDefaultHandler;
@@ -17,23 +15,23 @@ import in.srain.cube.request.RequestData;
 /**
  * Created by Administrator on 2016/3/30.
  */
-public class NewsListDataModel {
+public class LatestNewsListDataModel {
 
     private int mCurPageIndex = 0;
-    private int mPageCount = 30;
-    private List<NewsListItem> dataList = new ArrayList<NewsListItem>();
+    private int mPageCount = 10;
 
-    public List<NewsListItem> getDataList() {
-        return dataList;
+    public static interface DataHandler {
+        public void onData(LatestNewsListDataEvent event, CacheAbleRequest.ResultType type, boolean outOfDate);
     }
 
+    public void queryFirstPage(final DataHandler handler) {
+        CommCacheRequest<LatestNewsListDataEvent> request =
+                new CommCacheRequest<LatestNewsListDataEvent>(new CacheAbleRequestDefaultHandler<LatestNewsListDataEvent>() {
 
-    public void queryFirstPage() {
-        CommCacheRequest<NewsListDataEvent> request =
-                new CommCacheRequest<NewsListDataEvent>(new CacheAbleRequestDefaultHandler<NewsListDataEvent>() {
                     @Override
-                    public NewsListDataEvent processOriginData(JsonData jsonData) {
-                        dataList.clear();
+                    public LatestNewsListDataEvent processOriginData(JsonData jsonData) {
+                        LatestNewsListDataEvent event = new LatestNewsListDataEvent();
+                        event.dataList = new ArrayList<>();
 
                         JsonData array = jsonData.optJson("news_list");
                         for (int i = 0; i < array.length(); ++i) {
@@ -46,13 +44,11 @@ public class NewsListDataModel {
                             item.link = obj.optString("link");
                             item.date = obj.optString("date");
                             item.digest = obj.optString("digest");
-                            dataList.add(item);
+                            event.dataList.add(item);
                         }
 
-                        //获取成功
-                        NewsListDataEvent event = new NewsListDataEvent();
                         event.pageIndex = mCurPageIndex;
-                        event.isEmpty = dataList.isEmpty();
+                        event.isEmpty = event.dataList.isEmpty();
                         if (array.length() >= mPageCount) {
                             event.hasMore = true;
                         }
@@ -61,13 +57,12 @@ public class NewsListDataModel {
                     }
 
                     @Override
-                    public void onCacheAbleRequestFinish(NewsListDataEvent data, CacheAbleRequest.ResultType type, boolean outOfDate) {
-                        EventCenter.inst().post(data);
+                    public void onCacheAbleRequestFinish(LatestNewsListDataEvent data, CacheAbleRequest.ResultType type, boolean outOfDate) {
+                        handler.onData(data, type, outOfDate);
                     }
                 });
 
         mCurPageIndex = 0;
-        request.setDisableCache(true);
         RequestData requestData = request.getRequestData();
         requestData.addQueryData("offset", mCurPageIndex*mPageCount);
         requestData.addQueryData("count", mPageCount);
@@ -75,11 +70,14 @@ public class NewsListDataModel {
         request.send();
     }
 
-    public void queryNextPage() {
-        CommCacheRequest<NewsListDataEvent> request =
-                new CommCacheRequest<NewsListDataEvent>(new CacheAbleRequestDefaultHandler<NewsListDataEvent>() {
+    public void queryNextPage(final DataHandler handler) {
+        CommCacheRequest<LatestNewsListDataEvent> request =
+                new CommCacheRequest<LatestNewsListDataEvent>(new CacheAbleRequestDefaultHandler<LatestNewsListDataEvent>() {
                     @Override
-                    public NewsListDataEvent processOriginData(JsonData jsonData) {
+                    public LatestNewsListDataEvent processOriginData(JsonData jsonData) {
+                        LatestNewsListDataEvent event = new LatestNewsListDataEvent();
+                        event.dataList = new ArrayList<>();
+
                         JsonData array = jsonData.optJson("news_list");
                         for (int i = 0; i < array.length(); ++i) {
                             JsonData obj = array.optJson(i);
@@ -91,13 +89,11 @@ public class NewsListDataModel {
                             item.link = obj.optString("link");
                             item.date = obj.optString("date");
                             item.digest = obj.optString("digest");
-                            dataList.add(item);
+                            event.dataList.add(item);
                         }
 
-                        //获取成功
-                        NewsListDataEvent event = new NewsListDataEvent();
                         event.pageIndex = mCurPageIndex;
-                        event.isEmpty = dataList.isEmpty();
+                        event.isEmpty = event.dataList.isEmpty();
                         if (array.length() >= mPageCount) {
                             event.hasMore = true;
                             event.isEmpty = false;
@@ -106,17 +102,15 @@ public class NewsListDataModel {
                             event.isEmpty = true;
                         }
                         mCurPageIndex = mCurPageIndex + 1;
-
                         return event;
                     }
 
                     @Override
-                    public void onCacheAbleRequestFinish(NewsListDataEvent data, CacheAbleRequest.ResultType type, boolean outOfDate) {
-                        EventCenter.inst().post(data);
+                    public void onCacheAbleRequestFinish(LatestNewsListDataEvent data, CacheAbleRequest.ResultType type, boolean outOfDate) {
+                        handler.onData(data, type, outOfDate);
                     }
                 });
 
-        request.setDisableCache(true);
         RequestData requestData = request.getRequestData();
         requestData.addQueryData("offset", mCurPageIndex*mPageCount);
         requestData.addQueryData("count", mPageCount);

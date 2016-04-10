@@ -1,36 +1,39 @@
-package com.flylighten.app.gameheadline.ui.activity;
+package com.flylighten.app.gameheadline.ui.fragment;
 
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.flylighten.app.gameheadline.R;
-import com.flylighten.app.gameheadline.ui.fragment.NewsListFragment;
 
-import in.srain.cube.app.CubeFragmentActivity;
+import java.util.ArrayList;
+import java.util.List;
+
+import in.srain.cube.app.CubeFragment;
+import in.srain.cube.mints.base.TitleHeaderBar;
 import in.srain.cube.views.pager.TabPageIndicator;
 
-public class PagerTabIndicatorActivity extends CubeFragmentActivity {
-    private static final String[] CONTENT = new String[]{"最新", "热门", "兴趣"};
+public class NewsTabFragment extends CubeFragment {
+    private static final String[] CONTENT = new String[]{"最新", "本周热榜", "本月热榜"};
+    private final List<Fragment> mFragmentList = new ArrayList<>();
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_tabs);
 
-        TabPageAdapter adapter = new TabPageAdapter(getSupportFragmentManager());
+    void initNewsList(View view) {
 
-        ViewPager pager = (ViewPager) findViewById(R.id.pager);
+        TabPageAdapter adapter = new TabPageAdapter(getFragmentManager());
+
+        ViewPager pager = (ViewPager) view.findViewById(R.id.pager);
         pager.setAdapter(adapter);
 
-        TabPageIndicator indicator = (TabPageIndicator) findViewById(R.id.indicator);
+        TabPageIndicator indicator = (TabPageIndicator) view.findViewById(R.id.indicator);
         indicator.setViewHolderCreator(new TabPageIndicator.ViewHolderCreator() {
             @Override
             public TabPageIndicator.ViewHolderBase createViewHolder() {
@@ -41,16 +44,19 @@ public class PagerTabIndicatorActivity extends CubeFragmentActivity {
     }
 
     @Override
-    protected String getCloseWarning() {
-        return null;
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        ViewGroup view = (ViewGroup) inflater.inflate(R.layout.fragment_news_tabs, null);
+        initNewsList(view);
+        return view;
     }
 
     @Override
-    protected int getFragmentContainerId() {
-        return R.layout.activity_tabs;
+    protected View createView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return null;
     }
 
     class TabPageAdapter extends FragmentPagerAdapter {
+
 
         public TabPageAdapter(FragmentManager fm) {
             super(fm);
@@ -58,8 +64,19 @@ public class PagerTabIndicatorActivity extends CubeFragmentActivity {
 
         @Override
         public Fragment getItem(int position) {
-            Fragment fragment = new NewsListFragment();
-            return fragment;
+            if (0 == position) {
+                return new LatestNewsListFragment();
+            } else if (1 == position) {
+                HotNewsListFragment item = new HotNewsListFragment();
+                item.set_type(HotNewsListFragment.HOT_TYPE.HOT_TYPE_MONTHLY);
+                return item;
+            } else if (2 == position) {
+                HotNewsListFragment item = new HotNewsListFragment();
+                item.set_type(HotNewsListFragment.HOT_TYPE.HOT_TYPE_MONTHLY);
+                return item;
+            } else {
+                return new LatestNewsListFragment();
+            }
         }
 
         @Override

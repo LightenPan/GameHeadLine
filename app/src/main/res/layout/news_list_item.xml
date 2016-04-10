@@ -57,20 +57,58 @@
                         android:textSize="10sp" />
 
                     <TextView
+                        android:id="@+id/views"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_toRightOf="@+id/source"
+                        android:text="阅读"
+                        android:textSize="10sp"
+                        android:visibility="gone"
+                        />
+
+                    <TextView
+                        android:id="@+id/comments"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_toRightOf="@+id/views"
+                        android:text="评论"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/reposts"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_toRightOf="@+id/comments"
+                        android:text="转发"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/likes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_toRightOf="@+id/reposts"
+                        android:text="赞"
+                        android:textSize="10sp" />
+
+                    <TextView
+                        android:id="@+id/dislikes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="5dp"
+                        android:layout_toRightOf="@+id/likes"
+                        android:text="踩"
+                        android:textSize="10sp" />
+
+                    <TextView
                         android:id="@+id/date"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentRight="true"
                         android:text="发布日期"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:id="@+id/other"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="10dp"
-                        android:layout_toRightOf="@+id/source"
-                        android:text="标签"
                         android:textSize="10sp" />
                 </RelativeLayout>
             </RelativeLayout>

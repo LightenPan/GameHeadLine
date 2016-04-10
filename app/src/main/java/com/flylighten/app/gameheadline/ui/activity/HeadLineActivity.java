@@ -1,6 +1,7 @@
 package com.flylighten.app.gameheadline.ui.activity;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -14,7 +15,8 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.flylighten.app.gameheadline.R;
-import com.flylighten.app.gameheadline.ui.fragment.PagerTabIndicatorFragment;
+import com.flylighten.app.gameheadline.app.MyApplication;
+import com.flylighten.app.gameheadline.ui.fragment.NewsTabFragment;
 
 import in.srain.cube.mints.base.MintsBaseActivity;
 
@@ -55,14 +57,18 @@ public class HeadLineActivity extends MintsBaseActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        //创建子视图
-        pushFragmentToBackStack(PagerTabIndicatorFragment.class, null);
+        if (!MyApplication.isLogin()) {
+            //创建子视图
+            Intent intent = new Intent();
+            Class<?> dstClassName = LoginActivity.class;
+            intent.setClass(this, dstClassName);
+            startActivity(intent);
 
-//        //创建标签页视图
-//        Intent intent = new Intent();
-//        Class<?> dstClassName = PagerTabIndicatorActivity.class;
-//        intent.setClass(this, dstClassName);
-//        startActivity(intent);
+            //如果不关闭当前的会出现好多个页面
+            HeadLineActivity.this.finish();
+        } else {
+            pushFragmentToBackStack(NewsTabFragment.class, null);
+        }
     }
 
     @Override

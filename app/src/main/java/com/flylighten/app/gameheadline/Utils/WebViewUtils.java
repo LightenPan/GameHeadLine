@@ -1,6 +1,13 @@
 package com.flylighten.app.gameheadline.Utils;
 
 import android.content.Context;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
+
+import com.flylighten.app.gameheadline.app.MyApplication;
+
+import cz.msebera.android.httpclient.cookie.Cookie;
+
 
 /**
  * Created by Administrator on 2016/4/1.
@@ -15,5 +22,23 @@ public class WebViewUtils {
         //user-scalable=yes; 表示用户是否可以调整缩放比例
         String content = "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes\" />";
         return content + html;
+    }
+
+    public static void synCookies(Context context, String url) {
+        CookieSyncManager.createInstance(context);
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        cookieManager.removeSessionCookie();//移除
+
+        String duoshuo_token = String.format("duoshuo_token=%s", MyApplication.getDuoShuoToken());
+        cookieManager.setCookie(url, duoshuo_token);
+
+        String token = String.format("token=%s", MyApplication.getToken());
+        cookieManager.setCookie(url, token);
+
+        String uid = String.format("uid=%s", MyApplication.getUid());
+        cookieManager.setCookie(url, uid);
+
+        CookieSyncManager.getInstance().sync();
     }
 }

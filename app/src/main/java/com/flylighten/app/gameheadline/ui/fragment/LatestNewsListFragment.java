@@ -7,30 +7,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.flylighten.app.gameheadline.R;
-import com.flylighten.app.gameheadline.base.AppTitleBaseFragment;
+import com.flylighten.app.gameheadline.data.DuoShuoCountsItem;
 import com.flylighten.app.gameheadline.data.NewsListItem;
-import com.flylighten.app.gameheadline.event.CommonEventHandler;
-import com.flylighten.app.gameheadline.event.ErrorMessageDataEvent;
-import com.flylighten.app.gameheadline.event.EventCenter;
-import com.flylighten.app.gameheadline.event.NewsListDataEvent;
-import com.flylighten.app.gameheadline.model.NewsListDataModel;
+import com.flylighten.app.gameheadline.event.LatestNewsListDataEvent;
+import com.flylighten.app.gameheadline.model.DuoShuoCountsDataModel;
+import com.flylighten.app.gameheadline.model.LatestNewsListDataModel;
 import com.flylighten.app.gameheadline.ui.activity.NewsDetailActivity;
 import com.flylighten.app.gameheadline.ui.adapter.NewsListAdapter;
 
-import org.greenrobot.eventbus.Subscribe;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import in.srain.cube.app.CubeFragment;
-import in.srain.cube.app.ICubeFragment;
-import in.srain.cube.app.lifecycle.IComponentContainer;
-import in.srain.cube.app.lifecycle.LifeCycleComponent;
 import in.srain.cube.app.lifecycle.LifeCycleComponentManager;
-import in.srain.cube.mints.base.TitleHeaderBar;
-import in.srain.cube.util.CLog;
+import in.srain.cube.request.CacheAbleRequest;
 import in.srain.cube.views.loadmore.LoadMoreContainer;
 import in.srain.cube.views.loadmore.LoadMoreHandler;
 import in.srain.cube.views.loadmore.LoadMoreListViewContainer;
@@ -41,9 +34,9 @@ import in.srain.cube.views.ptr.PtrHandler;
 /**
  * Created by Administrator on 2016/4/2.
  */
-public class NewsListFragment extends CubeFragment {
+public class LatestNewsListFragment extends Fragment {
 
-    private static final String TAG = "NewsListFragment";
+    private static final String TAG = "LatestNewsListFragment";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -52,26 +45,19 @@ public class NewsListFragment extends CubeFragment {
         return view;
     }
 
-    private LifeCycleComponentManager mComponentContainer = new LifeCycleComponentManager();
+    private ArrayList<NewsListItem> mNewsListData = new ArrayList<NewsListItem>();
+    private NewsListAdapter mAdapter;
+    private LatestNewsListDataModel mDataModel = new LatestNewsListDataModel();
 
-    @Override
-    protected View createView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-//        View view = inflater.inflate(R.layout.fragment_news_list, null);
-//        initNewsList(view);
-//        return view;
-        return null;
-    }
-
-    NewsListAdapter mAdapter;
-    public ListView mListView;
-    public PtrFrameLayout mPtrFrame;
-    public NewsListDataModel mDataModel = new NewsListDataModel();
+    private ListView mListView;
+    private PtrFrameLayout mPtrFrame;
+    private LoadMoreListViewContainer mLoadMoreListViewContainer;
 
     private void initNewsList(View view) {
 
         ////////////////////////////////////////////////////////////////////////////////////
         // 绑定视图与数据
-        mAdapter = new NewsListAdapter(view.getContext(), R.layout.news_list_item, mDataModel.getDataList());
+        mAdapter = new NewsListAdapter(view.getContext(), R.layout.news_list_item, mNewsListData);
         mListView = (ListView) view.findViewById(R.id.news_list_list_view);
         mListView.setAdapter(mAdapter);
         ////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +68,7 @@ public class NewsListFragment extends CubeFragment {
         mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                NewsListItem item = mDataModel.getDataList().get(position);
+                NewsListItem item = mNewsListData.get(position);
                 Intent intent = new Intent();
                 intent.putExtra("linkmd5id", item.linkmd5id);
                 intent.putExtra("title", item.title);
@@ -104,40 +90,22 @@ public class NewsListFragment extends CubeFragment {
 
             @Override
             public void onRefreshBegin(PtrFrameLayout frame) {
-                mDataModel.queryFirstPage();
+                mDataModel.queryFirstPage(mDataHandler);
             }
         });
         ////////////////////////////////////////////////////////////////////////////////////
 
         ////////////////////////////////////////////////////////////////////////////////////
         //处理加载更多容器
-        final LoadMoreListViewContainer loadMoreListViewContainer =
-                (LoadMoreListViewContainer) view.findViewById(R.id.load_more_list_view_container);
-        loadMoreListViewContainer.useDefaultHeader();
-        loadMoreListViewContainer.setLoadMoreHandler(new LoadMoreHandler() {
+        mLoadMoreListViewContainer = (LoadMoreListViewContainer) view.findViewById(R.id.load_more_list_view_container);
+        mLoadMoreListViewContainer.useDefaultHeader();
+        mLoadMoreListViewContainer.setLoadMoreHandler(new LoadMoreHandler() {
             @Override
             public void onLoadMore(LoadMoreContainer loadMoreContainer) {
                 //向上滑动到最底部，加载更多
-                mDataModel.queryNextPage();
+                mDataModel.queryNextPage(mDataHandler);
             }
         });
-
-        //处理拉取数据成功事件
-        EventCenter.bindContainerAndHandler(this, new CommonEventHandler() {
-
-            @Subscribe
-            public void onEvent(NewsListDataEvent event) {
-                mPtrFrame.refreshComplete();
-                mAdapter.notifyDataSetChanged();
-                loadMoreListViewContainer.loadMoreFinish(event.isEmpty, event.hasMore);
-            }
-
-            @Subscribe
-            public void onEvent(ErrorMessageDataEvent event) {
-//                loadMoreListViewContainer.loadMoreError(0, event.message);
-            }
-
-        }).tryToRegisterIfNot();
 
         //自动加载第一页
         mPtrFrame.postDelayed(new Runnable() {
@@ -148,4 +116,55 @@ public class NewsListFragment extends CubeFragment {
         }, 150);
     }
 
+    //拉取数据回调处理
+    private LatestNewsListDataModel.DataHandler mDataHandler = new LatestNewsListDataModel.DataHandler() {
+
+        @Override
+        public void onData(LatestNewsListDataEvent event, CacheAbleRequest.ResultType type, boolean outOfDate) {
+            //如果是第一页，则清空现有数据
+            if (0 == event.pageIndex) {
+                mNewsListData.clear();
+            }
+
+            //添加新数据
+            mNewsListData.addAll(event.dataList);
+
+            //更新界面
+            mAdapter.notifyDataSetChanged();
+
+            //允许下拉刷新
+            mPtrFrame.refreshComplete();
+
+            //处理加载更多界面
+            mLoadMoreListViewContainer.loadMoreFinish(event.isEmpty, event.hasMore);
+
+
+            //拉取评论数
+            ArrayList<String> linkmd5idllist = new ArrayList<String>();
+            for (int i = 0; i < mNewsListData.size(); ++i) {
+                linkmd5idllist.add(mNewsListData.get(i).linkmd5id);
+            }
+            DuoShuoCountsDataModel.query(linkmd5idllist, new DuoShuoCountsDataModel.DataHandler() {
+
+                @Override
+                public void onData(HashMap<String, DuoShuoCountsItem> Counts, CacheAbleRequest.ResultType type, boolean outOfDate) {
+
+                    //更新评论数、转发数、阅读数、点赞数、踩
+                    for (int i = 0; i < mNewsListData.size(); ++i) {
+                        DuoShuoCountsItem item = Counts.get(mNewsListData.get(i).linkmd5id);
+                        if (null != item) {
+                            mNewsListData.get(i).comments = item.comments;
+                            mNewsListData.get(i).reposts = item.reposts;
+                            mNewsListData.get(i).views = item.views;
+                            mNewsListData.get(i).likes = item.likes;
+                            mNewsListData.get(i).dislikes = item.dislikes;
+                        }
+                    }
+
+                    //更新界面
+                    mAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    };
 }

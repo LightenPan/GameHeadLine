@@ -3,6 +3,8 @@ package com.flylighten.app.gameheadline.ui.activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -10,21 +12,11 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
 import com.flylighten.app.gameheadline.R;
+import com.flylighten.app.gameheadline.Utils.WebViewUtils;
 import com.flylighten.app.gameheadline.base.AppTitleBaseActivity;
-import com.flylighten.app.gameheadline.event.CommonEventHandler;
-import com.flylighten.app.gameheadline.event.ErrorMessageDataEvent;
-import com.flylighten.app.gameheadline.event.EventCenter;
-import com.flylighten.app.gameheadline.event.NewsDetailDataEvent;
-import com.flylighten.app.gameheadline.model.NewsDetailDataModel;
 import com.flylighten.app.gameheadline.request.API;
 
-import org.greenrobot.eventbus.Subscribe;
-
 import in.srain.cube.util.CLog;
-import in.srain.cube.views.ptr.PtrClassicFrameLayout;
-import in.srain.cube.views.ptr.PtrDefaultHandler;
-import in.srain.cube.views.ptr.PtrFrameLayout;
-import in.srain.cube.views.ptr.PtrHandler;
 
 /**
  * Created by Administrator on 2016/4/2.
@@ -36,8 +28,6 @@ public class NewsDetailActivity extends AppTitleBaseActivity {
     private String mTitle;
     private WebView mWebView;
     private ProgressBar mProgressBar;
-    private PtrClassicFrameLayout mPtrFrame;
-    private NewsDetailDataModel mDataModel = new NewsDetailDataModel();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,16 +66,12 @@ public class NewsDetailActivity extends AppTitleBaseActivity {
 //        mWebView.getSettings().setPluginsEnabled(true);
         mWebView.getSettings().setAllowFileAccess(true);
         mWebView.getSettings().setLoadWithOverviewMode(true);
-        mWebView.setBackgroundColor(0);
+        mWebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+        mWebView.getSettings().setAppCacheEnabled(true);
+        mWebView.getSettings().setDomStorageEnabled(true);
+        mWebView.getSettings().setDatabaseEnabled(true);
 
-        //设置webview内的用本地webview打开
-        mWebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
-            }
-        });
+        mWebView.setBackgroundColor(0);
 
         //显示进度
         mWebView.setWebChromeClient(new WebChromeClient() {
@@ -100,50 +86,29 @@ public class NewsDetailActivity extends AppTitleBaseActivity {
         });
         ////////////////////////////////////////////////////////////////////////////////////
 
-        ////////////////////////////////////////////////////////////////////////////////////
-        // 初始化下拉刷新组件
-        mPtrFrame = (PtrClassicFrameLayout) view.findViewById(R.id.news_detail_ptr_layout);
-        mPtrFrame.setLoadingMinTime(300);
-        mPtrFrame.setLastUpdateTimeRelateObject(this);
-        mPtrFrame.setPtrHandler(new PtrHandler() {
+        String url = API.GetDetail + mLinkMd5Id;
+
+        //将票据写入cookie中
+        WebViewUtils.synCookies(this, url);
+
+        //设置webview内的用本地webview打开
+        mWebView.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean checkCanDoRefresh(PtrFrameLayout frame, View content, View header) {
-                return PtrDefaultHandler.checkContentCanBePulledDown(frame, mWebView, header);
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.loadUrl(url);
+                return true;
             }
 
             @Override
-            public void onRefreshBegin(PtrFrameLayout frame) {
-                mDataModel.queryNewsDetail(mLinkMd5Id);
+            public void onPageFinished(WebView view, String url) {
+                CookieManager cookieManager = CookieManager.getInstance();
+                String CookieStr = cookieManager.getCookie(url);
+                CLog.e("onPageFinished", "Cookies: " + CookieStr);
+                super.onPageFinished(view, url);
             }
         });
-        ////////////////////////////////////////////////////////////////////////////////////
 
-        //处理拉取数据成功事件
-        EventCenter.bindContainerAndHandler(this, new CommonEventHandler() {
-
-            @Subscribe
-            public void onEvent(NewsDetailDataEvent event) {
-                String url = API.GetDetail2 + "?linkmd5id=" + mLinkMd5Id;
-                CLog.i(Tag, url);
-                mProgressBar.setVisibility(View.VISIBLE);
-                mWebView.loadUrl(url);
-
-                mPtrFrame.refreshComplete();
-            }
-
-            @Subscribe
-            public void onEvent(ErrorMessageDataEvent event) {
-//                loadMoreListViewContainer.loadMoreError(0, event.message);
-            }
-
-        }).tryToRegisterIfNot();
-
-        // auto load data
-        mPtrFrame.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mPtrFrame.autoRefresh(false);
-            }
-        }, 150);
+        mProgressBar.setVisibility(View.VISIBLE);
+        mWebView.loadUrl(url);
     }
 }

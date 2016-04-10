@@ -27,7 +27,11 @@ public class NewsListAdapter extends BaseAdapter {
         TextView date;
         TextView title;
         TextView digest;
-        TextView other;
+        TextView comments;
+        TextView reposts;
+        TextView views;
+        TextView likes;
+        TextView dislikes;
     }
 
     public NewsListAdapter(Context context, int resource,
@@ -64,7 +68,12 @@ public class NewsListAdapter extends BaseAdapter {
             viewHolder.date = (TextView) view.findViewById(R.id.date);
             viewHolder.title = (TextView) view.findViewById(R.id.title);
             viewHolder.digest = (TextView) view.findViewById(R.id.digest);
-            viewHolder.other = (TextView) view.findViewById(R.id.other);
+
+            viewHolder.comments = (TextView) view.findViewById(R.id.comments);
+            viewHolder.reposts = (TextView) view.findViewById(R.id.reposts);
+            viewHolder.views = (TextView) view.findViewById(R.id.views);
+            viewHolder.likes = (TextView) view.findViewById(R.id.likes);
+            viewHolder.dislikes = (TextView) view.findViewById(R.id.dislikes);
 
             view.setTag(viewHolder);
         } else {
@@ -77,6 +86,12 @@ public class NewsListAdapter extends BaseAdapter {
         viewHolder.title.setText(item.title);
         viewHolder.digest.setText(item.digest);
         viewHolder.source.setText("来自:" + item.source);
+
+        viewHolder.comments.setText("评论:" + item.comments);
+        viewHolder.reposts.setText("转发:" + item.reposts);
+        viewHolder.views.setText("阅读:" + item.views);
+        viewHolder.likes.setText("赞:" + item.likes);
+        viewHolder.dislikes.setText("踩:" + item.dislikes);
 
         return view;
     }
